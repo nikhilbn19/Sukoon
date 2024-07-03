@@ -1,0 +1,63 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const AssessmentModel = require('./models/assessmentSchema');
+const Counter = require('./models/counterSchema');
+const assessmentRouter = express.Router();
+const { ObjectId } = mongoose.Types;
+
+assessmentRouter.post('/create', async (req, res) => {
+    console.log('Request received for /assessments/create');
+    console.log(req.body);
+    try {
+        const { userId,userName, normalizedScore, textSuggestion } = req.body;
+        console.log(userId,userName, normalizedScore,textSuggestion);
+        if (!userId || !normalizedScore || !textSuggestion) {
+            return res.status(400).json({ message: 'Missing required data' });
+        }
+        // if (!mongoose.Types.ObjectId.isValid(userId)) {
+        //     console.log('Invalid userId', userId);
+        //     return res.status(400).json({ message: 'Invalid userId' });
+        // }
+
+        const counter = await Counter.findOneAndUpdate(
+            {userId},
+            {$inc: {sequenceValue: 1}},
+            {new: true,upsert: true}
+        );
+
+        const assessment = new AssessmentModel({
+            id: userId+""+counter.sequenceValue,
+            user: userName,
+            normalizedScore: parseFloat(normalizedScore.toFixed(2)),
+            textSuggestion,
+            date: Date.now()
+        });
+        await assessment.save();
+        console.log("submitted");
+        res.json({ message: 'Assessment created successfully' });
+    } catch (error) {
+        console.error("Error during assessment creation:", error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+assessmentRouter.get('/user/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        console.log(userId);
+
+        // if (!mongoose.Types.ObjectId.isValid(userId)) {
+        //     console.log('Invalid userId in get request', userId);
+        //     return res.status(400).json({ message: 'Invalid userId' });
+        // }
+
+        const assessments = await AssessmentModel.find({ user: userId }).sort({ date: -1 });
+        console.log(assessments);
+        res.json(assessments);
+    } catch (error) {
+        console.error("Error during assessment retrieval:", error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+module.exports = assessmentRouter;
