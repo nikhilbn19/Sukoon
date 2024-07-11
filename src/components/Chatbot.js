@@ -5,7 +5,7 @@ import { faUser, faRobot } from '@fortawesome/free-solid-svg-icons';
 import '../assets/css/Chatbot.css';
 import axios from 'axios';
 import Header from './Header';
-
+const apiKey = process.env.REACT_APP_API_KEY;
 function Chatbot() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
@@ -16,7 +16,7 @@ function Chatbot() {
     setAnswer("Loading...");
     try {
       const response = await axios({
-        url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyCNxnjQ0oGdP9mJnx0QCEtg9ytaklNUlh8",
+        url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={apiKey}`,
         method: "post",
         data: {
           contents: [
